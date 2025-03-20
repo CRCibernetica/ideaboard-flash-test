@@ -10,14 +10,22 @@ let isMonitoring = false;
 
 // Function to clean serial output by removing control characters except newlines
 function cleanSerialOutput(text) {
+    // Log raw text for debugging
+    console.log("Raw serial output:", [...text].map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
+
     // Remove ANSI escape sequences (e.g., \x1B[...m, \x1B[...G, etc.)
-    text = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
-               .replace(/\x1B\]0;.*?\x07/g, '')
-               .replace(/\x1B\]0;.*?\x5C/g, '');
+    text = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '') // Standard ANSI sequences
+               .replace(/\x1B\]0;.*?\x07/g, '')       // OSC sequences (e.g., set title)
+               .replace(/\x1B\]0;.*?\x5C/g, '')       // OSC sequences ending with ST (\)
+               .replace(/\x1B\]0;.*?[\x07\x5C]/g, ''); // Catch any remaining OSC sequences
+
     // Remove control characters except \n
     text = text.replace(/[\x00-\x09\x0B-\x1F\x7F-\x9F]/g, '');
+
     // Normalize line endings: replace \r\n with \n, remove standalone \r
-    return text.replace(/\r\n/g, '\n').replace(/\r/g, '');
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '');
+
+    return text;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
