@@ -13,6 +13,8 @@ let device = null;
 let transport = null;
 let esploader = null;
 let progressLine = null;
+let isTesting = false; // Track whether the terminal is running
+let reader = null; // Store the reader to release it later
 
 // Example firmware files (replace with your actual firmware files)
 const availableFirmware = [
@@ -65,6 +67,10 @@ function logError(text) {
 
 async function clickConnect() {
     if (transport) {
+        // Stop any ongoing terminal session
+        if (isTesting) {
+            await stopTest();
+        }
         await transport.disconnect();
         await sleep(1500);
         toggleUI(false);
@@ -112,6 +118,11 @@ async function clickProgram() {
 
     if (!confirm("This will erase and program the flash. Continue?")) return;
 
+    // Stop any ongoing terminal session
+    if (isTesting) {
+        await stopTest();
+    }
+
     butProgram.disabled = true;
     progressLine = null;
     try {
@@ -148,26 +159,36 @@ async function clickProgram() {
 }
 
 async function clickTest() {
+    if (isTesting) {
+        // If already testing, stop the terminal
+        await stopTest();
+        return;
+    }
+
     if (!transport || !device) {
         logError("Please connect to a device first");
         return;
     }
 
     try {
-        logLine("Starting serial terminal... Press Ctrl+C to exit.");
-        
-        // Ensure the port is open
-        if (!device.readable) {
-            await device.open({ baudRate: BAUD_RATE });
+        // Close and reopen the port to ensure a fresh stream
+        if (device.readable || device.writable) {
+            await device.close();
         }
+        await device.open({ baudRate: BAUD_RATE });
+
+        logLine("Starting serial terminal... Click Stop to exit.");
+        isTesting = true;
+        butTest.textContent = "Stop";
+        butTest.style.backgroundColor = "#e74c3c"; // Red to indicate "Stop"
 
         const decoder = new TextDecoder();
-        const reader = device.readable.getReader();
+        reader = device.readable.getReader();
 
         // Clear existing log for a clean terminal view
         log.innerHTML = "";
 
-        while (true) {
+        while (isTesting) {
             const { value, done } = await reader.read();
             if (done) {
                 logLine("Serial read stream ended.");
@@ -176,17 +197,35 @@ async function clickTest() {
             const text = decoder.decode(value);
             logLine(text.trim()); // Display each line of output
         }
-
-        reader.releaseLock();
     } catch (e) {
         logError(`Test failed: ${e.message}`);
+    } finally {
+        await stopTest();
     }
+}
+
+async function stopTest() {
+    if (reader) {
+        await reader.cancel(); // Cancel the reader to stop reading
+        reader.releaseLock(); // Release the lock on the stream
+        reader = null;
+    }
+    if (device.readable || device.writable) {
+        await device.close(); // Close the port
+    }
+    isTesting = false;
+    butTest.textContent = "Test";
+    butTest.style.backgroundColor = ""; // Reset to default color
+    logLine("Serial terminal stopped.");
 }
 
 function toggleUI(connected) {
     butConnect.textContent = connected ? "Disconnect" : "Connect";
     butProgram.disabled = !connected;
     butTest.disabled = !connected;
+    if (!connected && isTesting) {
+        stopTest(); // Stop testing if disconnecting
+    }
 }
 
 function sleep(ms) {
