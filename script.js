@@ -153,8 +153,13 @@ async function clickProgram() {
         logLine(`Programming completed in ${Date.now() - programStart}ms.`);
         logLine("Firmware installed successfully. Reset your device to run it.");
 
-        // Clean up the port after flashing to release any writers
+        // Clean up after flashing
+        await transport.disconnect(); // Ensure esptool-js releases the port
         await cleanupPort();
+        transport = null;
+        device = null;
+        toggleUI(false); // Force the user to reconnect
+        logLine("Please reconnect to the device to continue.");
     } catch (e) {
         logError(e.message);
     } finally {
