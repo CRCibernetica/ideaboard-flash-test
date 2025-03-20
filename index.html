@@ -68,9 +68,9 @@
 
       main {
         max-width: 800px;
-        width: 100%; /* Ensure it takes full available width */
+        width: 100%;
         margin: 0 auto;
-        padding: 0; /* Remove any padding that might affect width */
+        padding: 0;
       }
 
       #notSupported {
@@ -92,14 +92,13 @@
         font-family: 'Courier New', monospace;
         font-size: 14px;
         width: 100%;
-        min-width: 770px; /* Ensure at least 770px for ~85 characters */
+        min-width: 770px;
         box-sizing: border-box;
-        white-space: pre-wrap; /* Preserve whitespace, wrap at container edge */
-        display: block; /* Ensure block behavior */
       }
 
       #log > div {
         margin: 2px 0;
+        white-space: pre; /* Prevents wrapping except at newlines */
         line-height: 1.2;
       }
 

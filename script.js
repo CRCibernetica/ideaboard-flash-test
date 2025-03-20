@@ -266,15 +266,15 @@ async function stopTest() {
     butTest.style.backgroundColor = ""; // Reset to default color
 
     try {
-        // Release the reader if it exists
-        if (reader) {
+        // Release the reader if it exists and is not null
+        if (reader && reader.releaseLock) {
             await reader.cancel(); // Cancel the reader to stop reading
             reader.releaseLock(); // Release the lock on the ReadableStream
             reader = null;
         }
 
-        // Release the writer if it exists
-        if (writer) {
+        // Release the writer if it exists and is not null
+        if (writer && writer.releaseLock) {
             await writer.close(); // Close the writer
             writer.releaseLock(); // Release the lock on the WritableStream
             writer = null;
@@ -294,14 +294,14 @@ async function stopTest() {
 async function cleanupPort() {
     try {
         // Release any existing reader
-        if (reader) {
+        if (reader && reader.releaseLock) {
             await reader.cancel();
             reader.releaseLock();
             reader = null;
         }
 
         // Release any existing writer
-        if (writer) {
+        if (writer && writer.releaseLock) {
             await writer.close();
             writer.releaseLock();
             writer = null;
