@@ -1,4 +1,4 @@
-import { ESPLoader, Transport } from "https://unpkg.com/esptool-js/bundle.js"; // Use latest version
+import { ESPLoader, Transport } from "https://unpkg.com/esptool-js/bundle.js";
 
 const BAUD_RATE = 921600;
 const FLASH_OFFSET = 0x0;
@@ -39,6 +39,17 @@ document.addEventListener("DOMContentLoaded", () => {
         firmwareSelect.appendChild(option);
     });
 
+    // Listen for USB disconnect events
+    navigator.serial.addEventListener("disconnect", (event) => {
+        if (device && event.port === device) {
+            logLine("Device disconnected.");
+            cleanupPort();
+            transport = null;
+            device = null;
+            toggleUI(false);
+        }
+    });
+
     logLine("Ideaboard Flasher loaded.");
 });
 
@@ -72,7 +83,11 @@ async function clickConnect() {
         if (isTesting) {
             await stopTest();
         }
-        await transport.disconnect();
+        try {
+            await transport.disconnect();
+        } catch (e) {
+            logError(`Disconnect failed: ${e.message}`);
+        }
         await sleep(1500); // Give time for streams to release
         toggleUI(false);
         transport = null;
@@ -107,6 +122,9 @@ async function clickConnect() {
     } catch (e) {
         logError(e.message);
         toggleUI(false);
+        transport = null;
+        device = null;
+        logLine("Failed to connect. Please check the device and try again.");
     }
 }
 
@@ -155,7 +173,7 @@ async function clickProgram() {
 
         // Clean up after flashing
         if (transport) {
-            await transport.disconnect(); // Ensure esptool-js releases the port
+            await transport.disconnect();
             await sleep(1500); // Give time for streams to release
         }
         await cleanupPort();
@@ -281,8 +299,12 @@ async function cleanupPort() {
         logError(`Failed to clean up port: ${e.message}`);
         // If cleanup fails, force a disconnect
         if (transport) {
-            await transport.disconnect();
-            await sleep(1500);
+            try {
+                await transport.disconnect();
+                await sleep(1500);
+            } catch (e) {
+                logError(`Force disconnect failed: ${e.message}`);
+            }
         }
         if (device && (device.readable || device.writable)) {
             try {
