@@ -152,13 +152,30 @@ async function stopMonitoring() {
     butStart.style.backgroundColor = ""; // Reset to default color
 
     try {
+        // Release the reader if it exists
         if (reader) {
-            await reader.cancel();
-            reader.releaseLock();
+            try {
+                await reader.cancel();
+            } catch (e) {
+                logError(`Failed to cancel reader: ${e.message}`);
+            }
+            try {
+                if (reader && typeof reader.releaseLock === 'function') {
+                    reader.releaseLock();
+                }
+            } catch (e) {
+                logError(`Failed to release reader lock: ${e.message}`);
+            }
             reader = null;
         }
+
+        // Close the port if it's open
         if (port && port.readable) {
-            await port.close();
+            try {
+                await port.close();
+            } catch (e) {
+                logError(`Failed to close port: ${e.message}`);
+            }
         }
         logLine("Stopped monitoring serial port.");
     } catch (e) {
