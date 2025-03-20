@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Ideaboard Flasher</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+    <script type="module" src="script.js" defer></script>
+    <style>
+      :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --success-color: #2ecc71;
+        --error-color: #e74c3c;
+        --background-color: #ecf0f1;
+        --text-color: #333;
+      }
+
+      body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.6;
+      }
+
+      header {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        align-items: center;
+      }
+
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: var(--secondary-color);
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+
+      button:hover:not(:disabled) {
+        background-color: #2980b9;
+      }
+
+      button:disabled {
+        background-color: #95a5a6;
+        cursor: not-allowed;
+      }
+
+      select {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 16px;
+        background-color: white;
+        cursor: pointer;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+      }
+
+      main {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      #notSupported {
+        background-color: var(--error-color);
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+
+      #log {
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 15px;
+        height: 400px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+      }
+
+      #log > div {
+        margin: 2px 0;
+        word-wrap: break-word;
+        line-height: 1.2;
+      }
+
+      h1 {
+        color: var(--primary-color);
+        margin: 0 0 20px 0;
+        font-size: 24px;
+      }
+
+      #instructions {
+        background-color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+      }
+
+      #instructions ol {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      #instructions li {
+        margin-bottom: 10px;
+      }
+
+      #noDeviceLink {
+        color: var(--secondary-color);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      #driverInfo {
+        display: none;
+        margin-left: 20px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+      }
+
+      #driverInfo a {
+        color: var(--secondary-color);
+        text-decoration: none;
+      }
+
+      #driverInfo a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>CRCibernetica Ideaboard Flasher</h1>
+      <div id="instructions">
+        <ol>
+          <li>Plug the Ideaboard into a USB port.</li>
+          <li>
+            Click Connect and select the correct serial port.
+            <span id="noDeviceLink">No device found?</span>
+            <div id="driverInfo">
+              You may be missing the drivers for your board.<br>
+              Here is a link to the CH340 drivers used by the Ideaboard:
+              <a href="https://github.com/nodemcu/nodemcu-devkit/tree/master/Drivers" target="_blank">
+                CH340 Drivers
+              </a>
+            </div>
+          </li>
+          <li>Select the desired firmware and click on Program.</li>
+        </ol>
+      </div>
+      <header>
+        <button id="butConnect">Connect</button>
+        <button id="butProgram" disabled>Program</button>
+        <button id="butTest" disabled>Test</button>
+        <select id="firmwareSelect">
+          <option value="">Select Firmware</option>
+        </select>
+      </header>
+      <div id="notSupported">
+        Sorry, Web Serial is not supported. Use Chrome 89 or later.
+      </div>
+      <div id="log"></div>
+    </main>
+    <script>
+      // Inline script for toggle functionality
+      document.addEventListener('DOMContentLoaded', () => {
+        const noDeviceLink = document.getElementById('noDeviceLink');
+        const driverInfo = document.getElementById('driverInfo');
+        
+        noDeviceLink.addEventListener('click', () => {
+          driverInfo.style.display = driverInfo.style.display === 'none' ? 'block' : 'none';
+        });
+      });
+    </script>
+  </body>
+</html>
