@@ -68,7 +68,9 @@
 
       main {
         max-width: 800px;
+        width: 100%; /* Ensure it takes full available width */
         margin: 0 auto;
+        padding: 0; /* Remove any padding that might affect width */
       }
 
       #notSupported {
@@ -86,12 +88,14 @@
         padding: 15px;
         height: 400px;
         overflow-y: auto;
-        overflow-x: auto; /* Allow horizontal scrolling for long lines */
+        overflow-x: auto;
         font-family: 'Courier New', monospace;
         font-size: 14px;
-        width: 100%; /* Use full width of parent */
-        box-sizing: border-box; /* Include padding in width */
-        white-space: pre; /* Preserve whitespace and prevent wrapping */
+        width: 100%;
+        min-width: 770px; /* Ensure at least 770px for ~85 characters */
+        box-sizing: border-box;
+        white-space: pre-wrap; /* Preserve whitespace, wrap at container edge */
+        display: block; /* Ensure block behavior */
       }
 
       #log > div {

@@ -27,8 +27,8 @@ const availableFirmware = [
 function stripAnsiCodes(text) {
     // Remove ANSI escape sequences (e.g., \x1B[...m, \x1B[...G, etc.)
     return text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
-               .replace(/\x1B\]0;.*?\x07/g, '') // Remove title sequences (e.g., \x1B]0;...\x07)
-               .replace(/\x1B\]0;.*?\x5C/g, ''); // Remove title sequences ending with \ (e.g., \x1B]0;...\x5C)
+               .replace(/\x1B\]0;.*?\x07/g, '')
+               .replace(/\x1B\]0;.*?\x5C/g, '');
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -74,7 +74,7 @@ function logLine(text) {
         return;
     }
     const line = document.createElement("div");
-    line.textContent = stripAnsiCodes(text); // Strip ANSI codes before displaying
+    line.textContent = stripAnsiCodes(text);
     log.appendChild(line);
     log.scrollTop = log.scrollHeight;
 }
@@ -244,11 +244,12 @@ async function clickTest() {
                 break;
             }
             const text = decoder.decode(value);
-            // Split the text by newlines and log each line separately
-            const lines = text.split('\n');
+            // Normalize line endings: replace \r\n with \n, remove standalone \r
+            const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '');
+            const lines = normalizedText.split('\n');
             lines.forEach(line => {
                 if (line) {
-                    logLine(line); // Log each line without trimming
+                    logLine(line);
                 }
             });
         }
@@ -347,7 +348,7 @@ function sleep(ms) {
 function arrayBufferToBinaryString(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
     let binaryString = "";
-    for (let i = 0;  i < bytes.length; i++) {
+    for (let i = 0; i < bytes.length; i++) {
         binaryString += String.fromCharCode(bytes[i]);
     }
     return binaryString;
