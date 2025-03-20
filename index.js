@@ -7,6 +7,7 @@ const butStart = document.getElementById("butStart");
 let port = null;
 let reader = null;
 let isMonitoring = false;
+let buffer = ""; // Buffer to accumulate serial data
 
 // Function to clean serial output by removing control characters except newlines
 function cleanSerialOutput(text) {
@@ -103,8 +104,9 @@ async function clickStart() {
         butStart.textContent = "Stop";
         butStart.style.backgroundColor = "#e74c3c"; // Red to indicate "Stop"
 
-        // Clear the log
+        // Clear the log and buffer
         log.innerHTML = "";
+        buffer = "";
 
         const decoder = new TextDecoder();
         reader = port.readable.getReader();
@@ -112,17 +114,29 @@ async function clickStart() {
         while (isMonitoring) {
             const { value, done } = await reader.read();
             if (done) {
+                // Log any remaining data in the buffer
+                if (buffer) {
+                    logLine(buffer);
+                    buffer = "";
+                }
                 logLine("Serial stream ended.");
                 break;
             }
             const text = decoder.decode(value);
             const cleanedText = cleanSerialOutput(text);
-            const lines = cleanedText.split('\n');
-            lines.forEach(line => {
+
+            // Add the cleaned text to the buffer
+            buffer += cleanedText;
+
+            // Process the buffer for complete lines
+            let newlineIndex;
+            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+                const line = buffer.substring(0, newlineIndex).trim();
                 if (line) {
                     logLine(line);
                 }
-            });
+                buffer = buffer.substring(newlineIndex + 1);
+            }
         }
     } catch (e) {
         logError(`Monitoring failed: ${e.message}`);
