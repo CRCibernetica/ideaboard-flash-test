@@ -23,12 +23,14 @@ const availableFirmware = [
     "firmware/ideaboardfirmware03202025.bin"
 ];
 
-// Function to strip ANSI escape codes
+// Function to strip ANSI escape codes and control characters
 function stripAnsiCodes(text) {
     // Remove ANSI escape sequences (e.g., \x1B[...m, \x1B[...G, etc.)
     return text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
                .replace(/\x1B\]0;.*?\x07/g, '')
-               .replace(/\x1B\]0;.*?\x5C/g, '');
+               .replace(/\x1B\]0;.*?\x5C/g, '')
+               // Remove other control characters except \n
+               .replace(/[\x00-\x09\x0B-\x1F\x7F-\x9F]/g, '');
 }
 
 document.addEventListener("DOMContentLoaded", () => {
