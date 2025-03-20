@@ -86,15 +86,16 @@
         padding: 15px;
         height: 400px;
         overflow-y: auto;
+        overflow-x: auto; /* Allow horizontal scrolling for long lines */
         font-family: 'Courier New', monospace;
         font-size: 14px;
-        width: 100%; /* Ensure it uses the full width of the parent */
-        box-sizing: border-box; /* Include padding in width calculation */
+        width: 100%; /* Use full width of parent */
+        box-sizing: border-box; /* Include padding in width */
+        white-space: pre; /* Preserve whitespace and prevent wrapping */
       }
 
       #log > div {
         margin: 2px 0;
-        white-space: pre; /* Preserve whitespace and prevent wrapping */
         line-height: 1.2;
       }
 

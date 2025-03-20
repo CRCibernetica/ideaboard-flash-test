@@ -27,7 +27,8 @@ const availableFirmware = [
 function stripAnsiCodes(text) {
     // Remove ANSI escape sequences (e.g., \x1B[...m, \x1B[...G, etc.)
     return text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
-               .replace(/\x1B\]0;.*?\x07/g, ''); // Remove title sequences (e.g., \x1B]0;...\x07)
+               .replace(/\x1B\]0;.*?\x07/g, '') // Remove title sequences (e.g., \x1B]0;...\x07)
+               .replace(/\x1B\]0;.*?\x5C/g, ''); // Remove title sequences ending with \ (e.g., \x1B]0;...\x5C)
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -243,7 +244,13 @@ async function clickTest() {
                 break;
             }
             const text = decoder.decode(value);
-            logLine(text.trim()); // Display each line of output
+            // Split the text by newlines and log each line separately
+            const lines = text.split('\n');
+            lines.forEach(line => {
+                if (line) {
+                    logLine(line); // Log each line without trimming
+                }
+            });
         }
     } catch (e) {
         logError(`Test failed: ${e.message}`);
@@ -340,7 +347,7 @@ function sleep(ms) {
 function arrayBufferToBinaryString(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
     let binaryString = "";
-    for (let i = 0; i < bytes.length; i++) {
+    for (let i = 0;  i < bytes.length; i++) {
         binaryString += String.fromCharCode(bytes[i]);
     }
     return binaryString;
