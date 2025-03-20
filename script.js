@@ -1,6 +1,7 @@
 import { ESPLoader, Transport } from "https://unpkg.com/esptool-js/bundle.js";
 
-const BAUD_RATE = 921600;
+const FLASH_BAUD_RATE = 921600; // Baud rate for flashing
+const TEST_BAUD_RATE = 115200;  // Baud rate for testing
 const FLASH_OFFSET = 0x0;
 
 const log = document.getElementById("log");
@@ -103,7 +104,7 @@ async function clickConnect() {
         transport = new Transport(device, true);
         const loaderOptions = {
             transport: transport,
-            baudrate: BAUD_RATE,
+            baudrate: FLASH_BAUD_RATE, // Use flashing baud rate
             terminal: {
                 clean: () => (log.innerHTML = ""),
                 writeLine: (data) => logLine(data),
@@ -118,7 +119,7 @@ async function clickConnect() {
         esploader = new ESPLoader(loaderOptions);
         await esploader.main("default_reset");
         toggleUI(true);
-        logLine(`Connected at ${BAUD_RATE} baud.`);
+        logLine(`Connected at ${FLASH_BAUD_RATE} baud.`);
     } catch (e) {
         logError(e.message);
         toggleUI(false);
@@ -214,10 +215,10 @@ async function clickTest() {
         // Clean up the port to ensure no existing readers or writers
         await cleanupPort();
 
-        // Open the port
-        await device.open({ baudRate: BAUD_RATE });
+        // Open the port with the testing baud rate
+        await device.open({ baudRate: TEST_BAUD_RATE });
 
-        logLine("Starting serial terminal... Click Stop to exit.");
+        logLine(`Starting serial terminal at ${TEST_BAUD_RATE} baud... Click Stop to exit.`);
         isTesting = true;
         butTest.textContent = "Stop";
         butTest.style.backgroundColor = "#e74c3c"; // Red to indicate "Stop"
