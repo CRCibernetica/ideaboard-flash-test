@@ -15,9 +15,9 @@ function cleanSerialOutput(text) {
     console.log("Raw serial output:", [...text].map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
 
     // Remove ANSI escape sequences (e.g., \x1B[...m, \x1B[...G, etc.)
-    text = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '') // Standard ANSI sequences
-               .replace(/\x1B\]0;.*?\x07/g, '')       // OSC sequences (e.g., set title)
-               .replace(/\x1B\]0;.*?\x5C/g, '')       // OSC sequences ending with ST (\)
+    text = text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '') // Standard ANSI sequences (e.g., \x1B[2K, \x1B[0G)
+               .replace(/\x1B\]0;.*?\x07/g, '')       // OSC sequences ending with BEL (\x07)
+               .replace(/\x1B\]0;.*?\x5C/g, '')       // OSC sequences ending with ST (\x5C)
                .replace(/\x1B\]0;.*?[\x07\x5C]/g, ''); // Catch any remaining OSC sequences
 
     // Remove control characters except \n
@@ -116,24 +116,25 @@ async function clickStart() {
             if (done) {
                 // Log any remaining data in the buffer
                 if (buffer) {
-                    logLine(buffer);
+                    const cleanedBuffer = cleanSerialOutput(buffer);
+                    if (cleanedBuffer) {
+                        logLine(cleanedBuffer);
+                    }
                     buffer = "";
                 }
                 logLine("Serial stream ended.");
                 break;
             }
             const text = decoder.decode(value);
-            const cleanedText = cleanSerialOutput(text);
-
-            // Add the cleaned text to the buffer
-            buffer += cleanedText;
+            buffer += text;
 
             // Process the buffer for complete lines
             let newlineIndex;
             while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-                const line = buffer.substring(0, newlineIndex).trim();
-                if (line) {
-                    logLine(line);
+                const line = buffer.substring(0, newlineIndex);
+                const cleanedLine = cleanSerialOutput(line);
+                if (cleanedLine) {
+                    logLine(cleanedLine);
                 }
                 buffer = buffer.substring(newlineIndex + 1);
             }
