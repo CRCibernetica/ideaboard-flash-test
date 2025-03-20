@@ -23,6 +23,13 @@ const availableFirmware = [
     "firmware/ideaboardfirmware03202025.bin"
 ];
 
+// Function to strip ANSI escape codes
+function stripAnsiCodes(text) {
+    // Remove ANSI escape sequences (e.g., \x1B[...m, \x1B[...G, etc.)
+    return text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '')
+               .replace(/\x1B\]0;.*?\x07/g, ''); // Remove title sequences (e.g., \x1B]0;...\x07)
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     butConnect.addEventListener("click", clickConnect);
     butProgram.addEventListener("click", clickProgram);
@@ -66,7 +73,7 @@ function logLine(text) {
         return;
     }
     const line = document.createElement("div");
-    line.textContent = text;
+    line.textContent = stripAnsiCodes(text); // Strip ANSI codes before displaying
     log.appendChild(line);
     log.scrollTop = log.scrollHeight;
 }
@@ -110,7 +117,7 @@ async function clickConnect() {
                 writeLine: (data) => logLine(data),
                 write: (data) => {
                     const line = document.createElement("div");
-                    line.textContent = data;
+                    line.textContent = stripAnsiCodes(data);
                     log.appendChild(line);
                     log.scrollTop = log.scrollHeight;
                 },

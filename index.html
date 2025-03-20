@@ -88,11 +88,13 @@
         overflow-y: auto;
         font-family: 'Courier New', monospace;
         font-size: 14px;
+        width: 100%; /* Ensure it uses the full width of the parent */
+        box-sizing: border-box; /* Include padding in width calculation */
       }
 
       #log > div {
         margin: 2px 0;
-        word-wrap: break-word;
+        white-space: pre; /* Preserve whitespace and prevent wrapping */
         line-height: 1.2;
       }
 
