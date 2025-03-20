@@ -1,4 +1,4 @@
-import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.5.4/bundle.js";
+import { ESPLoader, Transport } from "https://unpkg.com/esptool-js/bundle.js"; // Use latest version
 
 const BAUD_RATE = 921600;
 const FLASH_OFFSET = 0x0;
@@ -73,7 +73,7 @@ async function clickConnect() {
             await stopTest();
         }
         await transport.disconnect();
-        await sleep(1500);
+        await sleep(1500); // Give time for streams to release
         toggleUI(false);
         transport = null;
         if (device) {
@@ -154,7 +154,10 @@ async function clickProgram() {
         logLine("Firmware installed successfully. Reset your device to run it.");
 
         // Clean up after flashing
-        await transport.disconnect(); // Ensure esptool-js releases the port
+        if (transport) {
+            await transport.disconnect(); // Ensure esptool-js releases the port
+            await sleep(1500); // Give time for streams to release
+        }
         await cleanupPort();
         transport = null;
         device = null;
@@ -162,6 +165,16 @@ async function clickProgram() {
         logLine("Please reconnect to the device to continue.");
     } catch (e) {
         logError(e.message);
+        // Clean up on error
+        if (transport) {
+            await transport.disconnect();
+            await sleep(1500);
+        }
+        await cleanupPort();
+        transport = null;
+        device = null;
+        toggleUI(false);
+        logLine("Please reconnect to the device to continue.");
     } finally {
         butProgram.disabled = !transport;
     }
@@ -266,6 +279,18 @@ async function cleanupPort() {
         }
     } catch (e) {
         logError(`Failed to clean up port: ${e.message}`);
+        // If cleanup fails, force a disconnect
+        if (transport) {
+            await transport.disconnect();
+            await sleep(1500);
+        }
+        if (device && (device.readable || device.writable)) {
+            try {
+                await device.close();
+            } catch (e) {
+                logError(`Force close failed: ${e.message}`);
+            }
+        }
     }
 }
 
