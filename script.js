@@ -14,7 +14,8 @@ let transport = null;
 let esploader = null;
 let progressLine = null;
 let isTesting = false; // Track whether the terminal is running
-let reader = null; // Store the reader to release it later
+let reader = null; // Store the reader for the ReadableStream
+let writer = null; // Store the writer for the WritableStream, if any
 
 // Example firmware files (replace with your actual firmware files)
 const availableFirmware = [
@@ -76,7 +77,7 @@ async function clickConnect() {
         toggleUI(false);
         transport = null;
         if (device) {
-            await device.close();
+            await cleanupPort();
             device = null;
         }
         return;
@@ -151,6 +152,9 @@ async function clickProgram() {
         await esploader.writeFlash(flashOptions);
         logLine(`Programming completed in ${Date.now() - programStart}ms.`);
         logLine("Firmware installed successfully. Reset your device to run it.");
+
+        // Clean up the port after flashing to release any writers
+        await cleanupPort();
     } catch (e) {
         logError(e.message);
     } finally {
@@ -171,10 +175,10 @@ async function clickTest() {
     }
 
     try {
-        // Close and reopen the port to ensure a fresh stream
-        if (device.readable || device.writable) {
-            await device.close();
-        }
+        // Clean up the port to ensure no existing readers or writers
+        await cleanupPort();
+
+        // Open the port
         await device.open({ baudRate: BAUD_RATE });
 
         logLine("Starting serial terminal... Click Stop to exit.");
@@ -205,18 +209,59 @@ async function clickTest() {
 }
 
 async function stopTest() {
-    if (reader) {
-        await reader.cancel(); // Cancel the reader to stop reading
-        reader.releaseLock(); // Release the lock on the stream
-        reader = null;
-    }
-    if (device.readable || device.writable) {
-        await device.close(); // Close the port
-    }
     isTesting = false;
     butTest.textContent = "Test";
     butTest.style.backgroundColor = ""; // Reset to default color
-    logLine("Serial terminal stopped.");
+
+    try {
+        // Release the reader if it exists
+        if (reader) {
+            await reader.cancel(); // Cancel the reader to stop reading
+            reader.releaseLock(); // Release the lock on the ReadableStream
+            reader = null;
+        }
+
+        // Release the writer if it exists
+        if (writer) {
+            await writer.close(); // Close the writer
+            writer.releaseLock(); // Release the lock on the WritableStream
+            writer = null;
+        }
+
+        // Close the port if it's open
+        if (device && (device.readable || device.writable)) {
+            await device.close();
+        }
+
+        logLine("Serial terminal stopped.");
+    } catch (e) {
+        logError(`Failed to stop terminal: ${e.message}`);
+    }
+}
+
+async function cleanupPort() {
+    try {
+        // Release any existing reader
+        if (reader) {
+            await reader.cancel();
+            reader.releaseLock();
+            reader = null;
+        }
+
+        // Release any existing writer
+        if (writer) {
+            await writer.close();
+            writer.releaseLock();
+            writer = null;
+        }
+
+        // Close the port if it's open
+        if (device && (device.readable || device.writable)) {
+            await device.close();
+        }
+    } catch (e) {
+        logError(`Failed to clean up port: ${e.message}`);
+    }
 }
 
 function toggleUI(connected) {
